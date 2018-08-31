@@ -92,7 +92,7 @@ class Personnage:
     def get_shields(self):
         return Item.filter_items_for_type(self.items, ItemType.SHIELD)
     def get_object_utilisable(self):
-        return Item.filter_items_for_type(self.items, ItemType.POTION and ItemType.BOMBE)
+        return Item.filter_items_for_type(self.items, ItemType.POTION ) + Item.filter_items_for_type(self.items, ItemType.BOMBE)
     def get_potion(self):
         return Item.filter_items_for_type(self.items, ItemType.POTION)
     def get_bombe(self):
@@ -167,25 +167,6 @@ class WeaponAttack(Attack):
                 weapon_index = int(input())
             return previous_attack + weapons[weapon_index].attack
 
-class Bombeattack(Attack):
-
-
-    def compute_attack(self, player):
-
-        bombes=player.get_bombe()
-        bombe_index = -1
-        while bombe_index < 0 or bombe_index > len(bombes):
-            print("Which bombe would you like to use ?")
-            print(list(enumerate(bombes)))
-            bombe_index = int(input())
-        Bonus = bombes[bombe_index].defense
-        idx = player.items.index(bombes[bombe_index])
-        del player.items[idx]
-        print(2)
-        return Bonus
-
-
-
 
 class Defend(Action):
 
@@ -254,26 +235,22 @@ class Objet(Action):
         print("Which object would you like to use ?")
         print(list(enumerate(list_object)))
         object_index=int(input())
+        object=list_object[object_index]
         print(type(list_object[object_index].type))
-        current_player.PointDeVie+=self.compute_pdv(current_player,list_object[object_index])
+        if list_object[object_index].type== ItemType.BOMBE:
+            target_player = self.board.select_target_for(current_player)
+            Bonus = object.PointDeVie
+            del current_player.items[current_player.items.index(object)]
+            print("la vie de " + target_player.name + " est de " + str(target_player.PointDeVie +Bonus))
 
-        def compute_pdv(self, player,object) -> int:
-            pass
+        elif list_object[object_index].type==ItemType.POTION:
+            Bonus = object.PointDeVie
+            del current_player.items[current_player.items.index(object)]
+            print("la vie de "+ current_player.name +" est de " +str(current_player.PointDeVie + Bonus))
 
-class Potion(Objet):
-    def __init__(self, objet : Objet):
-        self.objet=objet
-    def compute_pdv(self,player, object):
-        Bonus=object.PointDeVie
-        del player.items[object]
-        return Bonus
-class Bombe(Objet):
-    def __init__(self, objet : Objet):
-        self.objet=objet
-    def compute_pdv(self,player, object):
-        Bonus=object.PointDeVie
-        del player.items[object]
-        return Bonus
+
+
+
 
 class Exploration(Action):
 
@@ -393,8 +370,8 @@ def main():
     board.add_item(Item("Mushroom", ItemType.UNKNOWN))
     board.add_item(Potion("Potion", 50))
     board.add_item(Potion("Grosse Potion", 100))
-    board.add_item(Bombe("Bombe", 40))
-    board.add_item(Bombe("GrossenBombe", 80))
+    board.add_item(Bombe("Bombe", -40))
+    board.add_item(Bombe("GrossenBombe", -80))
 
     board.add_action("attaquer", CriticalAttack(WeaponAttack(HandAttack())))
     board.add_action("defendre", ShieldDefend(ArmorDefend(BoostDefense())))
@@ -423,3 +400,4 @@ def main():
 
 if __name__ == '__main__':
   main()
+
